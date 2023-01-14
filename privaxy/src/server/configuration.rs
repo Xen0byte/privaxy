@@ -8,8 +8,8 @@ use openssl::{
     x509::X509,
 };
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use std::{collections::BTreeSet, time::Duration};
+use std::{net::SocketAddr, path::PathBuf};
 use thiserror::Error;
 use tokio::sync::{self, mpsc::Sender};
 use tokio::{fs, sync::mpsc::Receiver};
@@ -20,6 +20,7 @@ const METADATA_FILE_NAME: &str = "metadata.json";
 const CONFIGURATION_DIRECTORY_NAME: &str = ".privaxy";
 const CONFIGURATION_FILE_NAME: &str = "config";
 const FILTERS_DIRECTORY_NAME: &str = "filters";
+const DEFAULT_PROXY_PORT: u16 = 8100;
 
 // Update filters every 10 minutes.
 const FILTERS_UPDATE_AFTER: Duration = Duration::from_secs(60 * 10);
@@ -115,6 +116,8 @@ pub struct Ca {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Configuration {
+    // Optional for backwards compatibility
+    socket_address: Option<SocketAddr>,
     pub exclusions: BTreeSet<String>,
     pub custom_filters: Vec<String>,
     ca: Ca,
@@ -304,6 +307,7 @@ impl Configuration {
             },
             exclusions: BTreeSet::new(),
             custom_filters: Vec::new(),
+            socket_address: Some(SocketAddr::from(([127, 0, 0, 1], DEFAULT_PROXY_PORT))),
         })
     }
 }
